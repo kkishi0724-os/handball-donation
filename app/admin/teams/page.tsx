@@ -48,13 +48,17 @@ export default function AdminTeamsPage() {
       image_url: form.image_url || null,
     }
 
-    if (editId) {
-      await supabase.from('teams').update(payload).eq('id', editId)
-      setMessage('更新しました')
-    } else {
-      await supabase.from('teams').insert(payload)
-      setMessage('登録しました')
+    const { error } = editId
+      ? await supabase.from('teams').update(payload).eq('id', editId)
+      : await supabase.from('teams').insert(payload)
+
+    if (error) {
+      setMessage(`保存に失敗しました: ${error.message}`)
+      setSaving(false)
+      return
     }
+
+    setMessage(editId ? '更新しました' : '登録しました')
     setForm(emptyForm)
     setEditId(null)
     setSaving(false)
@@ -73,7 +77,15 @@ export default function AdminTeamsPage() {
   }
 
   const handleToggle = async (team: Team) => {
-    await supabase.from('teams').update({ is_active: !team.is_active }).eq('id', team.id)
+    const { error } = await supabase
+      .from('teams')
+      .update({ is_active: !team.is_active })
+      .eq('id', team.id)
+    if (error) {
+      setMessage(`切り替えに失敗しました: ${error.message}`)
+      setTimeout(() => setMessage(''), 3000)
+      return
+    }
     fetchTeams()
   }
 
@@ -94,7 +106,11 @@ export default function AdminTeamsPage() {
       {/* フォーム */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-10">
         <h2 className="font-bold text-lg mb-4">{editId ? '部活を編集' : '部活を新規登録'}</h2>
-        {message && <p className="text-green-600 text-sm mb-3 font-medium">{message}</p>}
+        {message && (
+          <p className={`text-sm mb-3 font-medium ${message.includes('失敗') ? 'text-red-500' : 'text-green-600'}`}>
+            {message}
+          </p>
+        )}
         <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             { label: '部活名 *', key: 'name', placeholder: '○○高校男子ハンドボール部' },

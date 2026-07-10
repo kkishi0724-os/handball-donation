@@ -23,16 +23,20 @@ export async function POST(request: NextRequest) {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       )
-      await supabaseAdmin.from('donations').insert({
+      // stripe_payment_id は unique 制約あり。Webhook が再送された場合は
+      // insert が失敗するので、加算をスキップして二重計上を防ぐ
+      const { error: insertError } = await supabaseAdmin.from('donations').insert({
         team_id: teamId,
         amount: parseInt(amount, 10),
         stripe_payment_id: session.payment_intent as string,
       })
 
-      await supabaseAdmin.rpc('increment_donation', {
-        p_team_id: teamId,
-        p_amount: parseInt(amount, 10),
-      })
+      if (!insertError) {
+        await supabaseAdmin.rpc('increment_donation', {
+          p_team_id: teamId,
+          p_amount: parseInt(amount, 10),
+        })
+      }
     }
   }
 

@@ -50,6 +50,30 @@ create policy "誰でも公開部活を閲覧可" on teams
 create policy "誰でも寄付履歴を閲覧可" on donations
   for select using (true);
 
+-- ============================================================
+-- 管理者（ログイン済みユーザー）用ポリシー
+-- 管理画面（/admin/teams）は anon キー + Supabase Auth ログインで
+-- 操作するため、authenticated ロールへの許可が必要
+--
+-- ★重要★ Supabase ダッシュボードで必ず以下を設定すること:
+--   Authentication → Sign In / Up → 「Allow new users to sign up」をオフ
+--   （オンのままだと誰でもアカウントを作って管理者になれてしまう）
+--   管理者ユーザーは Authentication → Users → Add user で手動作成する
+-- ============================================================
+
+-- 管理者は非公開の部活も含めて全件閲覧できる
+create policy "管理者は全部活を閲覧可" on teams
+  for select to authenticated using (true);
+
+create policy "管理者は部活を登録可" on teams
+  for insert to authenticated with check (true);
+
+create policy "管理者は部活を更新可" on teams
+  for update to authenticated using (true);
+
+create policy "管理者は部活を削除可" on teams
+  for delete to authenticated using (true);
+
 -- Service Role（サーバーサイドAPI）は全操作可能
 -- （Supabase の service_role キーを使う API ルートが自動でバイパス）
 

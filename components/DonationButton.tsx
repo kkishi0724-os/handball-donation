@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 
-type Props = { teamId: string; teamName: string }
+type Props = { teamId: string }
 
 const AMOUNTS = [500, 1000, 3000, 5000, 10000]
 
-export default function DonationButton({ teamId, teamName }: Props) {
+export default function DonationButton({ teamId }: Props) {
   const [selected, setSelected] = useState<number>(1000)
   const [custom, setCustom] = useState('')
   const [loading, setLoading] = useState(false)
@@ -20,10 +20,11 @@ export default function DonationButton({ teamId, teamName }: Props) {
       const res = await fetch(`/donate/${teamId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: finalAmount, teamName }),
+        body: JSON.stringify({ amount: finalAmount }),
       })
-      const { url } = await res.json()
-      window.location.href = url
+      const data = await res.json()
+      if (!res.ok || !data.url) throw new Error(data.error ?? 'checkout failed')
+      window.location.href = data.url
     } catch {
       alert('エラーが発生しました。もう一度お試しください。')
       setLoading(false)

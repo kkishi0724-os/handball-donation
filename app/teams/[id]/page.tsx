@@ -115,7 +115,7 @@ export default async function TeamDetailPage({
         {/* 寄付ウィジェット */}
         <div className="lg:col-span-1">
           <div className="sticky top-20">
-            <DonationButton teamId={team.id} teamName={team.name} />
+            <DonationButton teamId={team.id} />
           </div>
         </div>
       </div>
